@@ -1,0 +1,84 @@
+﻿[dotenv@17.3.1] injecting env (4) from .env -- tip: ≡ƒöÉ prevent committing .env to code: https://dotenvx.com/precommit
+node : C:\Users\ASUS\
+OneDrive\Desktop\caps
+tone\backend\node_mod
+ules\passport-oauth2\
+lib\strategy.js:87
+At line:1 char:1
++ node server.js 
+2>&1 | Out-File 
+-FilePath 
+startup_error.txt 
+-Encoding  ...
++ ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (C:\User   
+ s\ASUS\O...\stra    
+tegy.js:87:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+  if 
+(!options.clientID) 
+{ throw new TypeError
+('OAuth2Strategy 
+requires a clientID 
+option'); }
+                     
+      ^
+
+TypeError: 
+OAuth2Strategy 
+requires a clientID 
+option
+    at Strategy.OAuth
+2Strategy (C:\Users\A
+SUS\OneDrive\Desktop\
+capstone\backend\node
+_modules\passport-oau
+th2\lib\strategy.js:8
+7:34)
+    at new Strategy (
+C:\Users\ASUS\OneDriv
+e\Desktop\capstone\ba
+ckend\node_modules\pa
+ssport-google-oauth20
+\lib\strategy.js:52:1
+8)
+    at 
+Object.<anonymous> (C
+:\Users\ASUS\OneDrive
+\Desktop\capstone\bac
+kend\config\passport.
+js:5:14)
+    at 
+Module._compile (node
+:internal/modules/cjs
+/loader:1760:14)
+    at Object..js (no
+de:internal/modules/c
+js/loader:1893:10)
+    at Module.load (n
+ode:internal/modules/
+cjs/loader:1480:32)
+    at Module._load (
+node:internal/modules
+/cjs/loader:1299:12)
+    at TracingChannel
+.traceSync (node:diag
+nostics_channel:328:1
+4)
+    at 
+wrapModuleLoad (node:
+internal/modules/cjs/
+loader:244:24)
+    at 
+Module.require (node:
+internal/modules/cjs/
+loader:1503:12)
+
+Node.js v24.9.0

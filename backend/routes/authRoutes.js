@@ -19,7 +19,8 @@ router.get('/google/callback',
     (req, res) => {
         const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
         const user = { id: req.user._id, username: req.user.username, email: req.user.email };
-        res.redirect(`http://localhost:5173/google-callback?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`);
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        res.redirect(`${frontendUrl}/google-callback?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`);
     }
 );
 

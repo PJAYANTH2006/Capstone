@@ -35,6 +35,20 @@ app.use(passport.initialize());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/rooms', require('./routes/roomRoutes'));
 
+// Deployment Diagnostic Route
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        environment: process.env.NODE_ENV || 'development',
+        config: {
+            FRONTEND_URL: process.env.FRONTEND_URL ? 'PRESENT' : 'MISSING',
+            CALLBACK_URL: process.env.CALLBACK_URL ? 'PRESENT' : 'MISSING',
+            GOOGLE_CONFIG: (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) ? 'PRESENT' : 'MISSING',
+            MONGO_URI: process.env.MONGO_URI ? 'PRESENT' : 'MISSING'
+        }
+    });
+});
+
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))

@@ -2,36 +2,42 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,200..900;1,200..900&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
 
-:root {
-  /* Refined Palette: Ink, Bone, Terracotta */
-  --bg-canvas: #f9f7f2; /* Warm paper-like background */
-  --ink-primary: #1a1c1e; /* Sophisticated near-black */
-  --ink-secondary: #4a4d51; 
-  --ink-muted: #8d9196;
-  
-  --accent-terra: #c45a4a; /* Earthy, intentional accent */
-  --accent-ink: #2c3e50;
-  --accent-paper: #ffffff;
-  
-  --border-refined: rgba(26, 28, 30, 0.12);
-  --border-strong: rgba(26, 28, 30, 0.25);
+@theme {
+  --color-canvas: #f9f7f2;
+  --color-ink-primary: #1a1c1e;
+  --color-ink-secondary: #4a4d51;
+  --color-ink-muted: #8d9196;
+  --color-terra: #c45a4a;
+  --color-paper: #ffffff;
 
   --font-serif: 'Crimson Pro', serif;
   --font-sans: 'Instrument Sans', sans-serif;
+}
 
-  font-family: var(--font-sans);
-  line-height: 1.6;
-  font-weight: 400;
-  color-scheme: light;
+:root {
+  --bg-canvas: #f9f7f2;
+  --ink-primary: #1a1c1e;
+  --ink-secondary: #4a4d51;
+  --ink-muted: #8d9196;
+  --accent-terra: #c45a4a;
+  --accent-paper: #ffffff;
+
+  --border-refined: rgba(26, 28, 30, 0.12);
+  --border-strong: rgba(26, 28, 30, 0.4);
+  /* Increased contrast */
+
+  --font-serif: 'Crimson Pro', serif;
+  --font-sans: 'Instrument Sans', sans-serif;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   background-color: var(--bg-canvas);
-  background-image: 
+  background-image:
     radial-gradient(rgba(26, 28, 30, 0.03) 1px, transparent 0);
-  background-size: 40px 40px; /* Subtle grid for the creative canvas feel */
+  background-size: 40px 40px;
+  /* Subtle grid for the creative canvas feel */
   color: var(--ink-primary);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -68,7 +74,8 @@ body {
 
 .btn-refined {
   padding: 0.75rem 1.5rem;
-  border-radius: 4px; /* More intentional sharp-ish corners */
+  border-radius: 4px;
+  /* More intentional sharp-ish corners */
   font-weight: 600;
   transition: all 0.2s ease;
   border: 1px solid transparent;

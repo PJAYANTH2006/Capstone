@@ -4,18 +4,26 @@ import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import { useCanvas } from '../hooks/useCanvas';
 import { motion } from 'framer-motion';
-import { Pencil, Eraser, Trash2, Users, Layout as LayoutIcon, Undo, Redo, Square, Circle, Minus, Type, Download, Crown } from 'lucide-react';
+import { Pencil, Eraser, Trash2, Users, Layout as LayoutIcon, Undo, Redo, Square, Circle, Minus, Type, Download, Crown, Ruler, Grid3X3, Shapes } from 'lucide-react';
 import Chat from '../components/Chat';
+import GridOverlay from '../components/GridOverlay';
+import AssetLibrary from '../components/AssetLibrary';
 
 const WhiteboardRoom = () => {
     const { roomId } = useParams();
     const navigate = useNavigate();
     const socket = useSocket();
     const { user } = useAuth();
-    const { canvasRef, startDrawing, draw, endDrawing, color, setColor, brushSize, setBrushSize, tool, setTool, clearCanvas, undo, redo, downloadCanvas } = useCanvas(socket, roomId);
+    const { canvasRef, startDrawing, draw, endDrawing, color, setColor, brushSize, setBrushSize, tool, setTool, scale, setScale, gridType, setGridType, clearCanvas, undo, redo, downloadCanvas } = useCanvas(socket, roomId);
     const [participants, setParticipants] = useState([]);
     const [remoteCursors, setRemoteCursors] = useState({}); // { socketId: { x, y, username } }
     const [roomHost, setRoomHost] = useState(null);
+    const [showAssets, setShowAssets] = useState(false);
+
+    const handleSelectAsset = (asset) => {
+        setTool('asset');
+        window.__currentSelectedAsset = asset;
+    };
 
     useEffect(() => {
         if (socket && user) {
@@ -176,7 +184,56 @@ const WhiteboardRoom = () => {
                         >
                             <Type size={24} strokeWidth={2.5} />
                         </button>
+                        <button
+                            onClick={() => setTool('dimension')}
+                            className={`p-4 transition-all duration-200 ${tool === 'dimension' ? 'bg-ink-primary text-white ring-2 ring-terra-600' : 'text-ink-primary hover:bg-ink-primary/10'}`}
+                            title="Dimension Line (Hold Shift to Snap)"
+                        >
+                            <Ruler size={24} strokeWidth={2.5} />
+                        </button>
                     </div>
+
+                    <div className="w-10 h-[2px] bg-ink-primary/20 mx-auto my-1"></div>
+
+                    <div className="flex flex-col items-center gap-1 w-full px-2">
+                        <span className="text-[9px] font-black uppercase text-ink-primary/50 tracking-widest text-center w-full block mb-1">Scale</span>
+                        <select
+                            value={scale}
+                            onChange={(e) => setScale(parseInt(e.target.value))}
+                            className="bg-white text-ink-primary text-[10px] font-black rounded px-2 py-1.5 outline-none border-2 border-ink-primary/20 w-full text-center hover:border-terra-600 transition-colors appearance-none cursor-pointer"
+                        >
+                            <option value="100">1:100</option>
+                            <option value="50">1:50</option>
+                            <option value="20">1:20</option>
+                            <option value="10">1:10</option>
+                        </select>
+                    </div>
+
+                    <div className="w-10 h-[2px] bg-ink-primary/20 mx-auto my-1"></div>
+
+                    <div className="flex flex-col items-center gap-1 w-full px-2">
+                        <span className="text-[9px] font-black uppercase text-ink-primary/50 tracking-widest text-center w-full block mb-1">Grid</span>
+                        <select
+                            value={gridType}
+                            onChange={(e) => setGridType(e.target.value)}
+                            className="bg-white text-ink-primary text-[10px] font-black rounded px-2 py-1.5 outline-none border-2 border-ink-primary/20 w-full text-center hover:border-terra-600 transition-colors appearance-none cursor-pointer"
+                        >
+                            <option value="none">None</option>
+                            <option value="standard">Standard</option>
+                            <option value="isometric">Isometric</option>
+                            <option value="perspective">Perspective</option>
+                        </select>
+                    </div>
+
+                    <div className="w-10 h-[2px] bg-ink-primary/20 mx-auto my-1"></div>
+
+                    <button
+                        onClick={() => setShowAssets(!showAssets)}
+                        className={`p-4 transition-all duration-200 ${showAssets ? 'bg-terra-600 text-white shadow-inner' : 'text-ink-primary hover:bg-ink-primary/10'}`}
+                        title="Stencils & Assets"
+                    >
+                        <Shapes size={24} strokeWidth={2.5} />
+                    </button>
 
                     <div className="w-10 h-[2px] bg-ink-primary/20 mx-auto my-1"></div>
 
@@ -238,8 +295,15 @@ const WhiteboardRoom = () => {
 
                 {/* Main Canvas Space */}
                 <div className="flex-1 bg-[#f1f1e9] flex items-center justify-center p-12 relative overflow-hidden">
-                    {/* Darker Grid Pattern for Context */}
-                    <div className="absolute inset-0 opacity-[0.3] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#1a1c1e 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+                    {/* Dynamic Grid Overlay */}
+                    <GridOverlay type={gridType} />
+
+                    {/* Optional Slide-out Asset Library */}
+                    {showAssets && (
+                        <div className="absolute left-0 top-0 bottom-0 z-30">
+                            <AssetLibrary onSelectAsset={handleSelectAsset} />
+                        </div>
+                    )}
 
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}

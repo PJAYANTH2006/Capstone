@@ -18,13 +18,13 @@ export const useCanvas = (socket, roomId) => {
         const ctx = canvas.getContext('2d');
 
         // Set canvas dimensions
-        canvas.width = window.innerWidth * 0.8;
-        canvas.height = window.innerHeight * 0.8;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        // Redraw history
-        redrawAll();
+        const resizeCanvas = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            redrawAll();
+        };
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
         if (socket) {
             socket.on('draw-data-receive', (action) => {
@@ -67,6 +67,7 @@ export const useCanvas = (socket, roomId) => {
                 socket.off('redo-receive');
                 socket.off('room-data');
             }
+            window.removeEventListener('resize', resizeCanvas);
         };
     }, [socket]);
 
@@ -79,6 +80,8 @@ export const useCanvas = (socket, roomId) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         history.forEach(action => {

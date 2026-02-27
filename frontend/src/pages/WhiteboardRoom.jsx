@@ -4,7 +4,7 @@ import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import { useCanvas } from '../hooks/useCanvas';
 import { motion } from 'framer-motion';
-import { Pencil, Eraser, Trash2, Users, Layout as LayoutIcon, Undo, Redo, Square, Circle, Minus, Type, Download, Crown, Ruler, Grid3X3, Shapes } from 'lucide-react';
+import { Pencil, Eraser, Trash2, Users, Layout as LayoutIcon, Undo, Redo, Square, Circle, Minus, Type, Download, Crown, Ruler, Grid3X3, Shapes, MessageSquare } from 'lucide-react';
 import Chat from '../components/Chat';
 import GridOverlay from '../components/GridOverlay';
 import AssetLibrary from '../components/AssetLibrary';
@@ -19,6 +19,7 @@ const WhiteboardRoom = () => {
     const [remoteCursors, setRemoteCursors] = useState({}); // { socketId: { x, y, username } }
     const [roomHost, setRoomHost] = useState(null);
     const [showAssets, setShowAssets] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
 
     const handleSelectAsset = (asset) => {
         setTool('asset');
@@ -91,6 +92,13 @@ const WhiteboardRoom = () => {
                         </div>
                     )}
                 </div>
+                <button
+                    onClick={() => setIsChatOpen(!isChatOpen)}
+                    className={`p-2 rounded-lg transition-colors border shadow-sm ${isChatOpen ? 'bg-[#1a1c1e] text-white border-[#1a1c1e]' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                    title="Toggle Chat"
+                >
+                    <MessageSquare size={16} strokeWidth={2.5} />
+                </button>
                 <button
                     onClick={() => navigate('/dashboard')}
                     className="bg-[#1a1c1e] hover:bg-gray-800 text-white text-xs font-semibold px-4 rounded-lg shadow-sm transition-colors"
@@ -272,9 +280,11 @@ const WhiteboardRoom = () => {
                 </div>
 
                 {/* Chat Panel - Collapsible/Floating */}
-                <div className="absolute right-4 top-20 bottom-4 w-80 bg-white rounded-xl shadow-lg border border-gray-200 flex flex-col z-[998] overflow-hidden">
-                    <Chat roomId={roomId} />
-                </div>
+                {isChatOpen && (
+                    <div className="absolute right-4 top-20 bottom-4 w-80 bg-white rounded-xl shadow-lg border border-gray-200 flex flex-col z-[998] overflow-hidden">
+                        <Chat roomId={roomId} />
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -7,8 +7,10 @@ export const useCanvas = (socket, roomId) => {
     const [tool, setTool] = useState('pencil');
     const [scale, setScale] = useState(100); // e.g., 100 means 1:100 scale. 1px = 100 actual units (e.g. mm)
     const [gridType, setGridType] = useState('none');
-    const [history, setHistory] = useState([]); // Array of actions: { type: 'pencil'|'rect'|'circle'|'line'|'dimension', points: [], color, size, text?: string }
+    const [history, setHistory] = useState([]); // Array of actions: { type: 'pencil'|'rect'|'circle'|'line'|'dimension', points: [], color, size, text?: string, layer: string }
     const [redoStack, setRedoStack] = useState([]);
+    const [activeLayer, setActiveLayer] = useState('Base Floor Plan');
+    const [visibleLayers, setVisibleLayers] = useState(new Set(['Base Floor Plan', 'Electrical', 'Plumbing', 'Furniture', 'Annotations', 'Redline']));
     const isDrawing = useRef(false);
     const currentAction = useRef(null);
 
@@ -71,10 +73,10 @@ export const useCanvas = (socket, roomId) => {
         };
     }, [socket]);
 
-    // Redraw all actions whenever history changes
+    // Redraw all actions whenever history or visibility changes
     useEffect(() => {
         redrawAll();
-    }, [history]);
+    }, [history, visibleLayers]);
 
     const redrawAll = () => {
         const canvas = canvasRef.current;
@@ -85,7 +87,11 @@ export const useCanvas = (socket, roomId) => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         history.forEach(action => {
-            drawAction(ctx, action);
+            // Filter by layer visibility. Legacy items (no layer) are always shown on 'Base Floor Plan'
+            const itemLayer = action.layer || 'Base Floor Plan';
+            if (visibleLayers.has(itemLayer)) {
+                drawAction(ctx, action);
+            }
         });
     };
 
@@ -178,6 +184,30 @@ export const useCanvas = (socket, roomId) => {
             ctx.lineWidth = 3 / svgScale; // Keep stroke width consistent regardless of scale
             ctx.stroke(p);
             ctx.restore();
+        } else if (action.type === 'cloud') {
+            const points = action.points;
+            if (points.length < 2) return;
+
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+
+            // Draw a bubbly/squiggly line connecting the points
+            for (let i = 1; i < points.length; i++) {
+                const p1 = points[i - 1];
+                const p2 = points[i];
+                const midX = (p1.x + p2.x) / 2;
+                const midY = (p1.y + p2.y) / 2;
+
+                // Create a perpendicular offset for the "cloud" bubble effect
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const ox = -dy / len * 5; // offset x
+                const oy = dx / len * 5;  // offset y
+
+                ctx.quadraticCurveTo(midX + ox, midY + oy, p2.x, p2.y);
+            }
+            ctx.stroke();
         }
     };
 
@@ -235,11 +265,12 @@ export const useCanvas = (socket, roomId) => {
         }
 
         currentAction.current = {
-            type: (tool === 'pencil' || tool === 'eraser') ? 'pencil' : tool,
+            type: (tool === 'pencil' || tool === 'eraser' || tool === 'cloud') ? tool : tool,
             tool, // keep for color logic
             points: [{ x: offsetX, y: offsetY }],
             color,
-            size: brushSize
+            size: brushSize,
+            layer: activeLayer
         };
 
         if (tool === 'text') {
@@ -413,5 +444,5 @@ export const useCanvas = (socket, roomId) => {
         link.click();
     };
 
-    return { canvasRef, startDrawing, draw, endDrawing, color, setColor, brushSize, setBrushSize, tool, setTool, scale, setScale, gridType, setGridType, clearCanvas, undo, redo, downloadCanvas };
+    return { canvasRef, startDrawing, draw, endDrawing, color, setColor, brushSize, setBrushSize, tool, setTool, scale, setScale, gridType, setGridType, clearCanvas, undo, redo, downloadCanvas, activeLayer, setActiveLayer, visibleLayers, setVisibleLayers };
 };

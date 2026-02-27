@@ -4,7 +4,7 @@ import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import { useCanvas } from '../hooks/useCanvas';
 import { motion } from 'framer-motion';
-import { Pencil, Eraser, Trash2, Users, Layout as LayoutIcon, Undo, Redo, Square, Circle, Minus, Type, Download, Crown, Ruler, Grid3X3, Shapes, MessageSquare } from 'lucide-react';
+import { Pencil, Eraser, Trash2, Users, Layout as LayoutIcon, Undo, Redo, Square, Circle, Minus, Type, Download, Crown, Ruler, Grid3X3, Shapes, MessageSquare, Layers, Eye, EyeOff, Lock, Cloud } from 'lucide-react';
 import Chat from '../components/Chat';
 import GridOverlay from '../components/GridOverlay';
 import AssetLibrary from '../components/AssetLibrary';
@@ -14,12 +14,34 @@ const WhiteboardRoom = () => {
     const navigate = useNavigate();
     const socket = useSocket();
     const { user } = useAuth();
-    const { canvasRef, startDrawing, draw, endDrawing, color, setColor, brushSize, setBrushSize, tool, setTool, scale, setScale, gridType, setGridType, clearCanvas, undo, redo, downloadCanvas } = useCanvas(socket, roomId);
+    const { canvasRef, startDrawing, draw, endDrawing, color, setColor, brushSize, setBrushSize, tool, setTool, scale, setScale, gridType, setGridType, clearCanvas, undo, redo, downloadCanvas, activeLayer, setActiveLayer, visibleLayers, setVisibleLayers } = useCanvas(socket, roomId);
     const [participants, setParticipants] = useState([]);
     const [remoteCursors, setRemoteCursors] = useState({}); // { socketId: { x, y, username } }
     const [roomHost, setRoomHost] = useState(null);
     const [showAssets, setShowAssets] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [showLayers, setShowLayers] = useState(false);
+
+    const isArchitect = user && roomHost && user.id === roomHost;
+    const layers = ['Base Floor Plan', 'Electrical', 'Plumbing', 'Furniture', 'Annotations', 'Redline'];
+
+    useEffect(() => {
+        if (user && roomHost && user.id !== roomHost) {
+            setActiveLayer('Redline');
+        }
+    }, [user, roomHost, setActiveLayer]);
+
+    const toggleLayerVisibility = (layerName) => {
+        setVisibleLayers(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(layerName)) {
+                newSet.delete(layerName);
+            } else {
+                newSet.add(layerName);
+            }
+            return newSet;
+        });
+    };
 
     const handleSelectAsset = (asset) => {
         setTool('asset');
@@ -100,6 +122,13 @@ const WhiteboardRoom = () => {
                     <MessageSquare size={16} strokeWidth={2.5} />
                 </button>
                 <button
+                    onClick={() => setShowLayers(!showLayers)}
+                    className={`p-2 rounded-lg transition-colors border shadow-sm ${showLayers ? 'bg-[#1a1c1e] text-white border-[#1a1c1e]' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                    title="Layers"
+                >
+                    <Layers size={16} strokeWidth={2.5} />
+                </button>
+                <button
                     onClick={() => navigate('/dashboard')}
                     className="bg-[#1a1c1e] hover:bg-gray-800 text-white text-xs font-semibold px-4 rounded-lg shadow-sm transition-colors"
                 >
@@ -119,6 +148,9 @@ const WhiteboardRoom = () => {
                     </button>
                     <button onClick={() => setTool('eraser')} className={`p-2 rounded-lg transition-colors ${tool === 'eraser' ? 'bg-[#e03131]/10 text-[#e03131]' : 'text-gray-600 hover:bg-gray-100'}`} title="Eraser">
                         <Eraser size={18} strokeWidth={2} />
+                    </button>
+                    <button onClick={() => setTool('cloud')} className={`p-2 rounded-lg transition-colors ${tool === 'cloud' ? 'bg-[#e03131]/10 text-[#e03131]' : 'text-gray-600 hover:bg-gray-100'}`} title="Revision Cloud">
+                        <Cloud size={18} strokeWidth={2} />
                     </button>
                 </div>
 
@@ -166,16 +198,22 @@ const WhiteboardRoom = () => {
             >
                 <div>
                     <span className="text-xs font-semibold text-gray-500 mb-2 block">Stroke</span>
-                    <div className="grid grid-cols-5 gap-2">
-                        {['#000000', '#e03131', '#2f9e44', '#1971c2', '#f08c00'].map(c => (
-                            <button
-                                key={c}
-                                onClick={() => setColor(c)}
-                                className={`w-8 h-8 rounded-md border ${color === c ? 'ring-2 ring-[#e03131] ring-offset-1 border-transparent' : 'border-gray-200'}`}
-                                style={{ backgroundColor: c }}
-                            />
-                        ))}
+                    <div className={`grid grid-cols-5 gap-2 ${activeLayer === 'Redline' ? 'opacity-50 pointer-events-none' : ''}`}>
+                        {['#000000', '#e03131', '#2f9e44', '#1971c2', '#f08c00'].map(c => {
+                            const actualColor = activeLayer === 'Redline' ? '#e03131' : color;
+                            return (
+                                <button
+                                    key={c}
+                                    onClick={() => setColor(c)}
+                                    className={`w-8 h-8 rounded-md border ${(actualColor === c || (activeLayer === 'Redline' && c === '#e03131')) ? 'ring-2 ring-[#e03131] ring-offset-1 border-transparent' : 'border-gray-200'}`}
+                                    style={{ backgroundColor: c }}
+                                />
+                            );
+                        })}
                     </div>
+                    {activeLayer === 'Redline' && (
+                        <p className="text-[10px] text-[#e03131] mt-2 font-medium italic">Redline mode: Color locked to Architectural Red</p>
+                    )}
                 </div>
 
                 <div>
@@ -284,6 +322,61 @@ const WhiteboardRoom = () => {
                     <div className="absolute right-4 top-20 bottom-4 w-80 bg-white rounded-xl shadow-lg border border-gray-200 flex flex-col z-[998] overflow-hidden">
                         <Chat roomId={roomId} />
                     </div>
+                )}
+
+                {/* Layers Panel - Floating */}
+                {showLayers && (
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="absolute right-4 top-20 w-64 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-[998]"
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold text-gray-800">Layers</h3>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-bold uppercase tracking-wider">
+                                {isArchitect ? 'Architect' : 'Client Mode'}
+                            </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            {layers.map(layer => {
+                                const isLocked = !isArchitect && layer !== 'Redline';
+                                const isActive = activeLayer === layer;
+                                const isVisible = visibleLayers.has(layer);
+
+                                return (
+                                    <div
+                                        key={layer}
+                                        className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${isActive ? 'bg-[#e03131]/5 border-[#e03131]/20' : 'border-transparent hover:bg-gray-50'}`}
+                                    >
+                                        <button
+                                            onClick={() => toggleLayerVisibility(layer)}
+                                            className={`p-1 rounded hover:bg-gray-200 transition-colors ${isVisible ? 'text-[#e03131]' : 'text-gray-300'}`}
+                                            title={isVisible ? 'Hide Layer' : 'Show Layer'}
+                                        >
+                                            {isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+                                        </button>
+
+                                        <button
+                                            disabled={isLocked}
+                                            onClick={() => setActiveLayer(layer)}
+                                            className={`flex-1 text-left text-xs font-medium flex items-center justify-between ${isLocked ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700'}`}
+                                        >
+                                            {layer}
+                                            {isLocked && <Lock size={10} />}
+                                            {isActive && !isLocked && <div className="w-1.5 h-1.5 rounded-full bg-[#e03131]" />}
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {!isArchitect && (
+                            <div className="mt-4 p-2 bg-amber-50 rounded-lg border border-amber-100">
+                                <p className="text-[10px] text-amber-700 leading-tight">
+                                    <strong>Redline Mode Active:</strong> As a client, you can only draw feedback on the Redline layer.
+                                </p>
+                            </div>
+                        )}
+                    </motion.div>
                 )}
             </div>
         </div>

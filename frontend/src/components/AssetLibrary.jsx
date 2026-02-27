@@ -53,33 +53,33 @@ const AssetLibrary = ({ onSelectAsset }) => {
 
     return (
         <motion.div
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="w-64 bg-white border-l-2 border-ink-primary shadow-2xl flex flex-col z-20 h-full overflow-hidden"
+            className="absolute top-20 left-[260px] w-64 bg-white rounded-xl shadow-lg border border-gray-200 flex flex-col z-[998] max-h-[calc(100vh-120px)] overflow-hidden"
         >
-            <div className="p-4 border-b-2 border-ink-primary bg-[#f9f7f2]">
-                <h2 className="text-sm font-black text-ink-primary uppercase tracking-widest">Stencils</h2>
-                <p className="text-[10px] text-ink-primary/60 mt-1">Select an asset, then click on the canvas to place it.</p>
+            <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+                <h2 className="text-sm font-semibold text-gray-800">Library</h2>
+                <p className="text-xs text-gray-500 mt-1">Select an item, click canvas to place.</p>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                     {ARCHITECTURAL_ASSETS.map(asset => (
                         <button
                             key={asset.id}
                             onClick={() => onSelectAsset(asset)}
-                            className="bg-white border-2 border-ink-primary/20 p-2 rounded-sm hover:border-terra-600 hover:shadow-md transition-all flex flex-col items-center justify-center gap-2 aspect-square group"
+                            className="bg-white border border-gray-200 p-2 rounded-lg hover:border-indigo-500 hover:shadow-sm hover:bg-indigo-50/30 transition-all flex flex-col items-center justify-center gap-2 aspect-square group"
                             title={asset.name}
                         >
                             <svg
                                 viewBox={asset.viewBox}
-                                className="w-12 h-12 stroke-ink-primary stroke-[3px] fill-transparent group-hover:stroke-terra-600 transition-colors"
+                                className="w-10 h-10 stroke-gray-600 stroke-2 fill-transparent group-hover:stroke-indigo-600 transition-colors"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                             >
                                 <path d={asset.path} />
                             </svg>
-                            <span className="text-[8px] font-black uppercase text-center text-ink-primary/70">{asset.name}</span>
+                            <span className="text-[10px] font-medium text-center text-gray-500 group-hover:text-indigo-600">{asset.name}</span>
                         </button>
                     ))}
                 </div>

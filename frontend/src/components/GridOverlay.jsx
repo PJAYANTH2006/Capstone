@@ -6,9 +6,9 @@ const GridOverlay = ({ type }) => {
     if (type === 'standard') {
         return (
             <div
-                className="absolute inset-0 opacity-[0.3] pointer-events-none"
+                className="absolute inset-0 opacity-[0.6] pointer-events-none"
                 style={{
-                    backgroundImage: 'radial-gradient(#1a1c1e 1px, transparent 1px)',
+                    backgroundImage: 'radial-gradient(#1a1c1e 1.5px, transparent 1.5px)',
                     backgroundSize: '40px 40px'
                 }}
             />
@@ -18,12 +18,12 @@ const GridOverlay = ({ type }) => {
     if (type === 'isometric') {
         return (
             <div
-                className="absolute inset-0 opacity-[0.2] pointer-events-none"
+                className="absolute inset-0 opacity-[0.5] pointer-events-none"
                 style={{
                     backgroundImage: `
-                        linear-gradient(30deg, #1a1c1e 1px, transparent 1px),
-                        linear-gradient(150deg, #1a1c1e 1px, transparent 1px),
-                        linear-gradient(90deg, #1a1c1e 1px, transparent 1px)
+                        linear-gradient(30deg, #1a1c1e 1.5px, transparent 1.5px),
+                        linear-gradient(150deg, #1a1c1e 1.5px, transparent 1.5px),
+                        linear-gradient(90deg, #1a1c1e 1.5px, transparent 1.5px)
                     `,
                     backgroundSize: '40px 69.28px, 40px 69.28px, 20px 34.64px',
                     backgroundPosition: '0 0, 0 0, -10px -17.32px'
@@ -36,7 +36,7 @@ const GridOverlay = ({ type }) => {
         // A simple 1-point perspective illusion using CSS gradients
         return (
             <div
-                className="absolute inset-0 opacity-[0.15] pointer-events-none overflow-hidden"
+                className="absolute inset-0 opacity-[0.4] pointer-events-none overflow-hidden"
                 style={{
                     background: `
                         repeating-linear-gradient(

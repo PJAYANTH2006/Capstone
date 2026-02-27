@@ -68,18 +68,18 @@ const AssetLibrary = ({ onSelectAsset }) => {
                         <button
                             key={asset.id}
                             onClick={() => onSelectAsset(asset)}
-                            className="bg-white border border-gray-200 p-2 rounded-lg hover:border-indigo-500 hover:shadow-sm hover:bg-indigo-50/30 transition-all flex flex-col items-center justify-center gap-2 aspect-square group"
+                            className="bg-white border border-gray-200 p-2 rounded-lg hover:border-[#e03131] hover:shadow-sm hover:bg-[#e03131]/10 transition-all flex flex-col items-center justify-center gap-2 aspect-square group"
                             title={asset.name}
                         >
                             <svg
                                 viewBox={asset.viewBox}
-                                className="w-10 h-10 stroke-gray-600 stroke-2 fill-transparent group-hover:stroke-indigo-600 transition-colors"
+                                className="w-10 h-10 stroke-gray-600 stroke-2 fill-transparent group-hover:stroke-[#e03131] transition-colors"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                             >
                                 <path d={asset.path} />
                             </svg>
-                            <span className="text-[10px] font-medium text-center text-gray-500 group-hover:text-indigo-600">{asset.name}</span>
+                            <span className="text-[10px] font-medium text-center text-gray-500 group-hover:text-[#e03131]">{asset.name}</span>
                         </button>
                     ))}
                 </div>

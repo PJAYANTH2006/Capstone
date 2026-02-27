@@ -67,14 +67,14 @@ const WhiteboardRoom = () => {
     if (!user) return null; // Defensive check
 
     return (
-        <div className="h-screen w-screen flex flex-col overflow-hidden relative bg-[#FDFDFF]">
+        <div className="h-screen w-screen flex flex-col overflow-hidden relative bg-[#f9f7f2]">
             {/* Top Right Island - Users & Exit */}
             <div className="absolute top-4 right-4 z-[999] flex gap-2">
                 <div className="flex items-center -space-x-2 bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-sm">
                     {participants.slice(0, 5).map((p, i) => (
                         <div
                             key={i}
-                            className="w-8 h-8 rounded-full border-2 border-white bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white relative group cursor-default"
+                            className="w-8 h-8 rounded-full border-2 border-white bg-[#1a1c1e] flex items-center justify-center text-[10px] font-bold text-white relative group cursor-default"
                             title={p.username}
                         >
                             {p.username[0].toUpperCase()}
@@ -93,7 +93,7 @@ const WhiteboardRoom = () => {
                 </div>
                 <button
                     onClick={() => navigate('/dashboard')}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 rounded-lg shadow-sm transition-colors"
+                    className="bg-[#1a1c1e] hover:bg-gray-800 text-white text-xs font-semibold px-4 rounded-lg shadow-sm transition-colors"
                 >
                     Leave
                 </button>
@@ -106,10 +106,10 @@ const WhiteboardRoom = () => {
                 className="absolute top-4 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-sm border border-gray-200 flex items-center p-1 gap-1 z-[999]"
             >
                 <div className="flex bg-gray-50/50 rounded-lg p-0.5">
-                    <button onClick={() => setTool('pencil')} className={`p-2 rounded-lg transition-colors ${tool === 'pencil' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`} title="Draw">
+                    <button onClick={() => setTool('pencil')} className={`p-2 rounded-lg transition-colors ${tool === 'pencil' ? 'bg-[#e03131]/10 text-[#e03131]' : 'text-gray-600 hover:bg-gray-100'}`} title="Draw">
                         <Pencil size={18} strokeWidth={2} />
                     </button>
-                    <button onClick={() => setTool('eraser')} className={`p-2 rounded-lg transition-colors ${tool === 'eraser' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`} title="Eraser">
+                    <button onClick={() => setTool('eraser')} className={`p-2 rounded-lg transition-colors ${tool === 'eraser' ? 'bg-[#e03131]/10 text-[#e03131]' : 'text-gray-600 hover:bg-gray-100'}`} title="Eraser">
                         <Eraser size={18} strokeWidth={2} />
                     </button>
                 </div>
@@ -117,26 +117,26 @@ const WhiteboardRoom = () => {
                 <div className="w-px h-6 bg-gray-200 mx-1"></div>
 
                 <div className="flex bg-gray-50/50 rounded-lg p-0.5">
-                    <button onClick={() => setTool('rect')} className={`p-2 rounded-lg transition-colors ${tool === 'rect' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`} title="Rectangle">
+                    <button onClick={() => setTool('rect')} className={`p-2 rounded-lg transition-colors ${tool === 'rect' ? 'bg-[#e03131]/10 text-[#e03131]' : 'text-gray-600 hover:bg-gray-100'}`} title="Rectangle">
                         <Square size={18} strokeWidth={2} />
                     </button>
-                    <button onClick={() => setTool('circle')} className={`p-2 rounded-lg transition-colors ${tool === 'circle' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`} title="Circle">
+                    <button onClick={() => setTool('circle')} className={`p-2 rounded-lg transition-colors ${tool === 'circle' ? 'bg-[#e03131]/10 text-[#e03131]' : 'text-gray-600 hover:bg-gray-100'}`} title="Circle">
                         <Circle size={18} strokeWidth={2} />
                     </button>
-                    <button onClick={() => setTool('line')} className={`p-2 rounded-lg transition-colors ${tool === 'line' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`} title="Line">
+                    <button onClick={() => setTool('line')} className={`p-2 rounded-lg transition-colors ${tool === 'line' ? 'bg-[#e03131]/10 text-[#e03131]' : 'text-gray-600 hover:bg-gray-100'}`} title="Line">
                         <Minus size={18} strokeWidth={2} />
                     </button>
-                    <button onClick={() => setTool('text')} className={`p-2 rounded-lg transition-colors ${tool === 'text' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`} title="Text">
+                    <button onClick={() => setTool('text')} className={`p-2 rounded-lg transition-colors ${tool === 'text' ? 'bg-[#e03131]/10 text-[#e03131]' : 'text-gray-600 hover:bg-gray-100'}`} title="Text">
                         <Type size={18} strokeWidth={2} />
                     </button>
                 </div>
 
                 <div className="w-px h-6 bg-gray-200 mx-1"></div>
 
-                <button onClick={() => setTool('dimension')} className={`p-2.5 rounded-lg transition-colors ${tool === 'dimension' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`} title="Dimension">
+                <button onClick={() => setTool('dimension')} className={`p-2.5 rounded-lg transition-colors ${tool === 'dimension' ? 'bg-[#e03131]/10 text-[#e03131]' : 'text-gray-600 hover:bg-gray-100'}`} title="Dimension">
                     <Ruler size={18} strokeWidth={2} />
                 </button>
-                <button onClick={() => setShowAssets(!showAssets)} className={`p-2.5 rounded-lg transition-colors ${showAssets ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`} title="Library">
+                <button onClick={() => setShowAssets(!showAssets)} className={`p-2.5 rounded-lg transition-colors ${showAssets ? 'bg-[#e03131]/10 text-[#e03131]' : 'text-gray-600 hover:bg-gray-100'}`} title="Library">
                     <Shapes size={18} strokeWidth={2} />
                 </button>
 
@@ -163,7 +163,7 @@ const WhiteboardRoom = () => {
                             <button
                                 key={c}
                                 onClick={() => setColor(c)}
-                                className={`w-8 h-8 rounded-md border ${color === c ? 'ring-2 ring-indigo-500 ring-offset-1 border-transparent' : 'border-gray-200'}`}
+                                className={`w-8 h-8 rounded-md border ${color === c ? 'ring-2 ring-[#e03131] ring-offset-1 border-transparent' : 'border-gray-200'}`}
                                 style={{ backgroundColor: c }}
                             />
                         ))}
@@ -177,7 +177,7 @@ const WhiteboardRoom = () => {
                             <button
                                 key={s}
                                 onClick={() => setBrushSize(s)}
-                                className={`flex-1 py-1 rounded-md flex justify-center items-center ${brushSize === s ? 'bg-indigo-100 shadow-sm' : 'hover:bg-gray-200'}`}
+                                className={`flex-1 py-1 rounded-md flex justify-center items-center ${brushSize === s ? 'bg-[#e03131]/10 shadow-sm' : 'hover:bg-gray-200'}`}
                             >
                                 <div className="bg-gray-800 rounded-full" style={{ width: s * 1.5, height: s * 1.5 }}></div>
                             </button>
@@ -192,7 +192,7 @@ const WhiteboardRoom = () => {
                     <select
                         value={scale}
                         onChange={(e) => setScale(parseInt(e.target.value))}
-                        className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                        className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e03131]/50"
                     >
                         <option value="100">1:100</option>
                         <option value="50">1:50</option>
@@ -206,7 +206,7 @@ const WhiteboardRoom = () => {
                     <select
                         value={gridType}
                         onChange={(e) => setGridType(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                        className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e03131]/50"
                     >
                         <option value="none">None</option>
                         <option value="standard">Standard</option>
@@ -226,7 +226,7 @@ const WhiteboardRoom = () => {
                         <Redo size={18} />
                     </button>
                 </div>
-                <button onClick={downloadCanvas} className="bg-white p-1.5 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg shadow-sm border border-gray-200" title="Export Image">
+                <button onClick={downloadCanvas} className="bg-white p-1.5 text-gray-600 hover:text-[#e03131] hover:bg-[#e03131]/10 rounded-lg shadow-sm border border-gray-200" title="Export Image">
                     <Download size={18} />
                 </button>
             </div>

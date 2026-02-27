@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 
 export const useCanvas = (socket, roomId) => {
     const canvasRef = useRef(null);
-    const [color, setColor] = useState('#ffffff');
+    const [color, setColor] = useState('#000000');
     const [brushSize, setBrushSize] = useState(5);
     const [tool, setTool] = useState('pencil');
     const [scale, setScale] = useState(100); // e.g., 100 means 1:100 scale. 1px = 100 actual units (e.g. mm)

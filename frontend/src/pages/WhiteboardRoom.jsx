@@ -134,7 +134,7 @@ const WhiteboardRoom = () => {
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="fixed left-8 top-1/2 -translate-y-1/2 p-2 bg-white border-2 border-ink-primary rounded-sm flex flex-col items-center gap-2 z-[999] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.2)]"
+                    className="absolute left-8 top-1/2 -translate-y-1/2 p-2 bg-white border-2 border-ink-primary rounded-sm flex flex-col items-center gap-2 z-[999] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.2)]"
                 >
                     <div className="flex flex-col items-center gap-1">
                         <button
@@ -327,8 +327,8 @@ const WhiteboardRoom = () => {
                                 className="absolute pointer-events-none transition-all duration-75 z-50 flex items-center gap-4"
                                 style={{ left: pos.x, top: pos.y }}
                             >
-                                <div className="w-5 h-5 bg-terra-600 scale-110 shadow-xl border-2 border-white transform rotate-45" />
-                                <div className="bg-ink-primary text-white text-[11px] font-black uppercase tracking-wider px-3 py-2 rounded-sm shadow-[0_10px_30px_rgba(0,0,0,0.4)] border-2 border-white whitespace-nowrap">
+                                <div className="w-5 h-5 bg-black scale-110 shadow-xl border-2 border-white transform rotate-45" />
+                                <div className="bg-black text-white text-[11px] font-black uppercase tracking-wider px-3 py-2 rounded-sm shadow-[0_10px_30px_rgba(0,0,0,0.4)] border-2 border-white whitespace-nowrap">
                                     {pos.username}
                                 </div>
                             </div>

@@ -6,22 +6,69 @@ export const useWebRTC = (socket, roomId) => {
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [activeSpeakerIds, setActiveSpeakerIds] = useState(new Set());
 
     const peers = useRef({}); // { socketId: RTCPeerConnection }
     const localStreamRef = useRef(null);
+    const audioContext = useRef(null);
+    const analysers = useRef({}); // { socketId: AnalyserNode }
 
     const iceServers = {
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     };
+
+    const setupVolumeDetection = useCallback((stream, socketId) => {
+        if (!audioContext.current) {
+            audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        const source = audioContext.current.createMediaStreamSource(stream);
+        const analyser = audioContext.current.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        analysers.current[socketId] = analyser;
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        const checkVolume = () => {
+            if (!analysers.current[socketId]) return;
+            analyser.getByteFrequencyData(dataArray);
+            const volume = dataArray.reduce((acc, val) => acc + val, 0) / bufferLength;
+
+            if (volume > 20) { // Threshold for "talking"
+                setActiveSpeakerIds(prev => new Set(prev).add(socketId));
+            } else {
+                setActiveSpeakerIds(prev => {
+                    if (prev.has(socketId)) {
+                        const next = new Set(prev);
+                        next.delete(socketId);
+                        return next;
+                    }
+                    return prev;
+                });
+            }
+            requestAnimationFrame(checkVolume);
+        };
+        checkVolume();
+    }, []);
 
     const cleanupPeer = useCallback((socketId) => {
         if (peers.current[socketId]) {
             peers.current[socketId].close();
             delete peers.current[socketId];
         }
+        if (analysers.current[socketId]) {
+            delete analysers.current[socketId];
+        }
         setRemoteStreams(prev => {
             const next = { ...prev };
             delete next[socketId];
+            return next;
+        });
+        setActiveSpeakerIds(prev => {
+            const next = new Set(prev);
+            next.delete(socketId);
             return next;
         });
     }, []);
@@ -42,10 +89,12 @@ export const useWebRTC = (socket, roomId) => {
 
         pc.ontrack = (event) => {
             if (event.streams && event.streams[0]) {
+                const remoteStream = event.streams[0];
                 setRemoteStreams(prev => ({
                     ...prev,
-                    [peerSocketId]: event.streams[0]
+                    [peerSocketId]: remoteStream
                 }));
+                setupVolumeDetection(remoteStream, peerSocketId);
             }
         };
 
@@ -56,7 +105,7 @@ export const useWebRTC = (socket, roomId) => {
         };
 
         return pc;
-    }, [socket, cleanupPeer]);
+    }, [socket, cleanupPeer, setupVolumeDetection]);
 
     const initiateCall = useCallback(async (peerSocketId, stream) => {
         const pc = createPeerConnection(peerSocketId, stream);
@@ -71,7 +120,9 @@ export const useWebRTC = (socket, roomId) => {
             setLocalStream(stream);
             localStreamRef.current = stream;
 
-            // Notify others that we are starting media
+            // Setup volume detection for local stream
+            setupVolumeDetection(stream, 'local');
+
             socket.emit('start-media', { roomId });
             return stream;
         } catch (err) {
@@ -86,22 +137,23 @@ export const useWebRTC = (socket, roomId) => {
             setLocalStream(null);
             localStreamRef.current = null;
         }
-        // Close all peer connections
+        if (analysers.current['local']) delete analysers.current['local'];
         Object.keys(peers.current).forEach(cleanupPeer);
         socket.emit('stop-media', { roomId });
     };
 
-    const toggleMute = () => {
+    const toggleMute = useCallback((forceState) => {
         if (localStreamRef.current) {
             const audioTrack = localStreamRef.current.getAudioTracks()[0];
             if (audioTrack) {
-                audioTrack.enabled = !audioTrack.enabled;
+                const newState = forceState !== undefined ? !forceState : !audioTrack.enabled;
+                audioTrack.enabled = newState;
                 setIsMuted(!audioTrack.enabled);
             }
         }
-    };
+    }, []);
 
-    const toggleVideo = () => {
+    const toggleVideo = useCallback(() => {
         if (localStreamRef.current) {
             const videoTrack = localStreamRef.current.getVideoTracks()[0];
             if (videoTrack) {
@@ -109,27 +161,22 @@ export const useWebRTC = (socket, roomId) => {
                 setIsVideoOff(!videoTrack.enabled);
             }
         }
+    }, []);
+
+    const sendModeratorCommand = (command, targetId) => {
+        socket.emit('moderator-command', { roomId, command, targetId });
     };
 
     const startScreenShare = async () => {
         try {
             const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
             setIsScreenSharing(true);
-
-            // Replace video track in all peer connections
             const screenTrack = screenStream.getVideoTracks()[0];
-
             Object.values(peers.current).forEach(pc => {
                 const sender = pc.getSenders().find(s => s.track.kind === 'video');
                 if (sender) sender.replaceTrack(screenTrack);
             });
-
-            screenTrack.onended = () => {
-                stopScreenShare();
-            };
-
-            // Update local stream state (optional, for preview)
-            // Note: This replaces the local webcam preview with the screen share
+            screenTrack.onended = () => stopScreenShare();
         } catch (err) {
             console.error('Error starting screen share:', err);
         }
@@ -159,36 +206,34 @@ export const useWebRTC = (socket, roomId) => {
 
         socket.on('webrtc-answer', async ({ from, answer }) => {
             const pc = peers.current[from];
-            if (pc) {
-                await pc.setRemoteDescription(new RTCSessionDescription(answer));
-            }
+            if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
         });
 
         socket.on('webrtc-ice-candidate', async ({ from, candidate }) => {
             const pc = peers.current[from];
-            if (pc) {
-                await pc.addIceCandidate(new RTCIceCandidate(candidate));
-            }
+            if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
         });
 
         socket.on('user-started-media', ({ from }) => {
-            if (localStreamRef.current) {
-                initiateCall(from, localStreamRef.current);
-            }
+            if (localStreamRef.current) initiateCall(from, localStreamRef.current);
         });
 
-        socket.on('user-left', ({ socketId }) => {
-            cleanupPeer(socketId);
+        socket.on('moderator-command', ({ command }) => {
+            if (command === 'mute') toggleMute(true);
+            if (command === 'end-call') stopMedia();
         });
+
+        socket.on('user-left', ({ socketId }) => cleanupPeer(socketId));
 
         return () => {
             socket.off('webrtc-offer');
             socket.off('webrtc-answer');
             socket.off('webrtc-ice-candidate');
             socket.off('user-started-media');
+            socket.off('moderator-command');
             socket.off('user-left');
         };
-    }, [socket, createPeerConnection, initiateCall, cleanupPeer]);
+    }, [socket, createPeerConnection, initiateCall, cleanupPeer, toggleMute]);
 
     return {
         localStream,
@@ -196,11 +241,13 @@ export const useWebRTC = (socket, roomId) => {
         isMuted,
         isVideoOff,
         isScreenSharing,
+        activeSpeakerIds,
         startMedia,
         stopMedia,
         toggleMute,
         toggleVideo,
         startScreenShare,
-        stopScreenShare
+        stopScreenShare,
+        sendModeratorCommand
     };
 };

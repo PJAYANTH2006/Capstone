@@ -57,6 +57,22 @@ const socketHandler = (io) => {
             socket.to(roomId).emit('user-stopped-media', { from: socket.id });
         });
 
+        socket.on('moderator-command', async ({ roomId, command, targetId }) => {
+            // Verify host identity via DB
+            try {
+                const room = await Room.findOne({ roomId });
+                if (room && room.host.toString() === roomUsers[roomId][socket.id].id) {
+                    if (targetId) {
+                        socket.to(targetId).emit('moderator-command', { command });
+                    } else {
+                        socket.to(roomId).emit('moderator-command', { command });
+                    }
+                }
+            } catch (err) {
+                console.error('Moderation error:', err);
+            }
+        });
+
         socket.on('cursor-move', ({ roomId, data }) => {
             socket.to(roomId).emit('cursor-move-receive', { ...data, socketId: socket.id });
         });

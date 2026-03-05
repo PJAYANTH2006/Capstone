@@ -23,7 +23,8 @@ const WhiteboardRoom = () => {
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [showLayers, setShowLayers] = useState(false);
     const [copied, setCopied] = useState(false);
-    const { localStream, remoteStreams, isMuted, isVideoOff, isScreenSharing, startMedia, stopMedia, toggleMute, toggleVideo, startScreenShare, stopScreenShare } = useWebRTC(socket, roomId);
+    const [pinnedId, setPinnedId] = useState(null); // 'local' or socketId
+    const { localStream, remoteStreams, isMuted, isVideoOff, isScreenSharing, activeSpeakerIds, startMedia, stopMedia, toggleMute, toggleVideo, startScreenShare, stopScreenShare, sendModeratorCommand } = useWebRTC(socket, roomId);
 
     const handleCopyRoomId = () => {
         navigator.clipboard.writeText(roomId);
@@ -275,8 +276,48 @@ const WhiteboardRoom = () => {
                                 </button>
                             </div>
                         )}
+
+                        {isArchitect && localStream && (
+                            <div className="mt-4 bg-[#1a1c1e] p-3 rounded-xl border border-white/10 shadow-lg">
+                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3 block">Architect Command</span>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        onClick={() => sendModeratorCommand('mute')}
+                                        className="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[9px] font-bold text-white uppercase tracking-tighter transition-all"
+                                    >
+                                        Mute All
+                                    </button>
+                                    <button
+                                        onClick={() => sendModeratorCommand('end-call')}
+                                        className="flex-1 px-3 py-2 bg-[#e03131]/20 hover:bg-[#e03131]/30 border border-[#e03131]/30 rounded-lg text-[9px] font-bold text-[#ff6b6b] uppercase tracking-tighter transition-all"
+                                    >
+                                        End Session
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
+
+                {isArchitect && localStream && (
+                    <div className="mt-2 bg-[#1a1c1e] p-3 rounded-xl border border-white/10 shadow-lg">
+                        <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3 block">Architect Command</span>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => sendModeratorCommand('mute')}
+                                className="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[9px] font-bold text-white uppercase tracking-tighter transition-all"
+                            >
+                                Mute All
+                            </button>
+                            <button
+                                onClick={() => sendModeratorCommand('end-call')}
+                                className="flex-1 px-3 py-2 bg-[#e03131]/20 hover:bg-[#e03131]/30 border border-[#e03131]/30 rounded-lg text-[9px] font-bold text-[#ff6b6b] uppercase tracking-tighter transition-all"
+                            >
+                                End Session
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <div>
                     <span className="text-xs font-semibold text-gray-500 mb-2 block">Stroke width</span>
@@ -371,7 +412,7 @@ const WhiteboardRoom = () => {
                                 style={{ left: pos.x, top: pos.y }}
                             >
                                 <div className="w-5 h-5 bg-black scale-110 shadow-xl border-2 border-white transform rotate-45" />
-                                <div className="bg-black text-white text-[11px] font-black uppercase tracking-wider px-3 py-2 rounded-sm shadow-[0_10px_30px_rgba(0,0,0,0.4)] border-2 border-white whitespace-nowrap">
+                                <div className="bg-black text-white text-[11px] font-black uppercase tracking-wider px-3 py-2 rounded-sm shadow-[0_10px_30px_rgba(0,0,0,0.4)] border-2 border-white whitespace-nowrap z-[1000]">
                                     {pos.username}
                                 </div>
                             </div>
@@ -448,7 +489,14 @@ const WhiteboardRoom = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[997] flex gap-3 pointer-events-none"
                     >
-                        <VideoContainer stream={localStream} username={user.username} isLocal={true} />
+                        <VideoContainer
+                            stream={localStream}
+                            username={user.username}
+                            isLocal={true}
+                            isTalking={activeSpeakerIds.has('local')}
+                            isPinned={pinnedId === 'local'}
+                            onPin={() => setPinnedId(pinnedId === 'local' ? null : 'local')}
+                        />
                         {Object.entries(remoteStreams).map(([socketId, stream]) => {
                             if (!stream) return null;
                             const participant = participants.find(p => p.socketId === socketId);
@@ -458,17 +506,32 @@ const WhiteboardRoom = () => {
                                     stream={stream}
                                     username={participant?.username || 'Collaborator'}
                                     isLocal={false}
+                                    isTalking={activeSpeakerIds.has(socketId)}
+                                    isPinned={pinnedId === socketId}
+                                    onPin={() => setPinnedId(pinnedId === socketId ? null : socketId)}
                                 />
                             );
                         })}
                     </motion.div>
+                )}
+
+                {/* Pinned Video Overlay */}
+                {pinnedId && (
+                    <div className="absolute inset-0 z-[996] bg-black/80 backdrop-blur-md flex items-center justify-center p-20 pointer-events-none">
+                        <div className="w-full h-full max-w-6xl aspect-video rounded-3xl overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/10 pointer-events-auto relative bg-[#1a1c1e]">
+                            <PinnedVideoContainer
+                                stream={pinnedId === 'local' ? localStream : remoteStreams[pinnedId]}
+                                onUnpin={() => setPinnedId(null)}
+                            />
+                        </div>
+                    </div>
                 )}
             </div>
         </div>
     );
 };
 
-const VideoContainer = ({ stream, username, isLocal }) => {
+const VideoContainer = ({ stream, username, isLocal, isTalking, isPinned, onPin }) => {
     const videoRef = useRef();
     const [videoEnabled, setVideoEnabled] = useState(true);
 
@@ -493,9 +556,18 @@ const VideoContainer = ({ stream, username, isLocal }) => {
 
     return (
         <motion.div
+            layout
+            onClick={onPin}
             initial={{ opacity: 0, scale: 0.9, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="relative w-40 h-28 bg-[#1a1c1e] rounded-xl overflow-hidden border-2 border-white/80 shadow-2xl pointer-events-auto backdrop-blur-md"
+            animate={{
+                opacity: 1,
+                scale: 1,
+                y: 0,
+                borderColor: isTalking ? '#e03131' : (isPinned ? 'white' : 'transparent'),
+                borderWidth: 2,
+                boxShadow: isTalking ? '0 0 20px rgba(224, 49, 49, 0.4)' : 'none'
+            }}
+            className="relative w-40 h-28 bg-[#1a1c1e] rounded-xl overflow-hidden shadow-2xl pointer-events-auto cursor-pointer group"
         >
             {stream && (
                 <video
@@ -517,16 +589,34 @@ const VideoContainer = ({ stream, username, isLocal }) => {
             )}
 
             <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                <div className="flex items-center justify-between">
-                    <span className="text-[9px] text-white font-black uppercase tracking-widest truncate max-w-[80%]">
-                        {isLocal ? 'ME (PRO)' : username}
-                    </span>
-                    {!isLocal && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
-                    )}
-                </div>
+                <span className="text-[9px] text-white font-black uppercase tracking-widest truncate block">
+                    {isLocal ? 'ME (PRO)' : username}
+                </span>
             </div>
+            {isPinned && <div className="absolute top-2 right-2 p-1 bg-white rounded-md text-[8px] text-black font-black uppercase tracking-widest">FOCUS</div>}
         </motion.div>
+    );
+};
+
+const PinnedVideoContainer = ({ stream, onUnpin }) => {
+    const videoRef = useRef();
+
+    useEffect(() => {
+        if (videoRef.current && stream) {
+            videoRef.current.srcObject = stream;
+        }
+    }, [stream]);
+
+    return (
+        <>
+            <video ref={videoRef} autoPlay playsInline className="w-full h-full object-contain" />
+            <button
+                onClick={onUnpin}
+                className="absolute top-6 right-6 px-6 py-2.5 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-2xl hover:bg-gray-100 transition-all border-b-4 border-gray-200 pointer-events-auto"
+            >
+                Unpin Focus Mode
+            </button>
+        </>
     );
 };
 

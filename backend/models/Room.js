@@ -11,8 +11,8 @@ const roomSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-roomSchema.pre('save', async function (next) {
-    if (!this.isModified('password') || !this.password) return next();
+roomSchema.pre('save', async function () {
+    if (!this.isModified('password') || !this.password) return;
     const bcrypt = require('bcryptjs');
     this.password = await bcrypt.hash(this.password, 10);
 });

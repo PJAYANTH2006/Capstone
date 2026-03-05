@@ -14,12 +14,18 @@ const Dashboard = () => {
     const [showJoinPassword, setShowJoinPassword] = useState(false);
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [notification, setNotification] = useState({ message: '', type: 'error', visible: false });
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchHistory();
     }, []);
+
+    const showToast = (message, type = 'error') => {
+        setNotification({ message, type, visible: true });
+        setTimeout(() => setNotification(prev => ({ ...prev, visible: false })), 4000);
+    };
 
     const fetchHistory = async () => {
         try {
@@ -33,6 +39,15 @@ const Dashboard = () => {
     };
 
     const handleCreateRoom = async () => {
+        if (!roomName) {
+            showToast('Please provide an identification for the room.');
+            return;
+        }
+        if (isPrivate && !password) {
+            showToast('Please provide a secure access token (password) for creation.');
+            return;
+        }
+
         try {
             const res = await axios.post('/api/rooms', {
                 name: roomName,
@@ -41,7 +56,7 @@ const Dashboard = () => {
             });
             navigate(`/room/${res.data.roomId}`);
         } catch (err) {
-            alert(err.response?.data?.error || 'Error creating room');
+            showToast(err.response?.data?.error || 'Error creating room');
         }
     };
 
@@ -53,13 +68,17 @@ const Dashboard = () => {
                 setShowJoinPassword(true);
                 return;
             }
+            if (showJoinPassword && !joinPassword) {
+                showToast('Please provide the verification token.');
+                return;
+            }
             const res = await axios.post('/api/rooms/join', {
                 roomId: roomIdInput,
                 password: joinPassword
             });
             navigate(`/room/${res.data.roomId}`);
         } catch (err) {
-            alert(err.response?.data?.error || 'Error joining room');
+            showToast(err.response?.data?.error || 'Error joining room');
         }
     };
 
@@ -67,6 +86,20 @@ const Dashboard = () => {
         <div className="min-h-screen relative p-8 lg:p-16 overflow-hidden">
             {/* Background Texture */}
             <div className="absolute inset-0 z-0 opacity-[0.02]" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/natural-paper.png")' }}></div>
+
+            {/* Notification Toast */}
+            {notification.visible && (
+                <motion.div
+                    initial={{ opacity: 0, y: -20, x: '-50%' }}
+                    animate={{ opacity: 1, y: 0, x: '-50%' }}
+                    exit={{ opacity: 0, y: -20, x: '-50%' }}
+                    className={`fixed top-8 left-1/2 z-[1000] px-6 py-3 rounded-lg shadow-xl border flex items-center gap-3 min-w-[320px] ${notification.type === 'error' ? 'bg-[#fff5f5] border-red-200 text-[#c92a2a]' : 'bg-[#f4fce3] border-green-200 text-[#2b8a3e]'
+                        }`}
+                >
+                    <div className={`w-2 h-2 rounded-full ${notification.type === 'error' ? 'bg-[#c92a2a]' : 'bg-[#2b8a3e]'}`} />
+                    <span className="text-xs font-black uppercase tracking-wider">{notification.message}</span>
+                </motion.div>
+            )}
 
             <div className="max-w-7xl mx-auto relative z-10">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-24 gap-10">

@@ -435,92 +435,99 @@ const WhiteboardRoom = () => {
                             <div className="mt-4 p-2 bg-amber-50 rounded-lg border border-amber-100">
                                 <p className="text-[10px] text-amber-700 leading-tight">
                                     <strong>Redline Mode Active:</strong> As a client, you can only draw feedback on the Redline layer.
-                                    {/* Floating Video Grid - Fixed Bottom Center */}
-                                    {localStream && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[997] flex gap-3 pointer-events-none"
-                                        >
-                                            <VideoContainer stream={localStream} username={user.username} isLocal={true} />
-                                            {Object.entries(remoteStreams).map(([socketId, stream]) => {
-                                                if (!stream) return null;
-                                                const participant = participants.find(p => p.socketId === socketId);
-                                                return (
-                                                    <VideoContainer
-                                                        key={socketId}
-                                                        stream={stream}
-                                                        username={participant?.username || 'Collaborator'}
-                                                        isLocal={false}
-                                                    />
-                                                );
-                                            })}
-                                        </motion.div>
-                                    )}
+                                </p>
                             </div>
+                        )}
+                    </motion.div>
+                )}
+
+                {/* Floating Video Grid - Fixed Bottom Center */}
+                {localStream && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[997] flex gap-3 pointer-events-none"
+                    >
+                        <VideoContainer stream={localStream} username={user.username} isLocal={true} />
+                        {Object.entries(remoteStreams).map(([socketId, stream]) => {
+                            if (!stream) return null;
+                            const participant = participants.find(p => p.socketId === socketId);
+                            return (
+                                <VideoContainer
+                                    key={socketId}
+                                    stream={stream}
+                                    username={participant?.username || 'Collaborator'}
+                                    isLocal={false}
+                                />
+                            );
+                        })}
+                    </motion.div>
+                )}
+            </div>
         </div>
-                );
+    );
 };
 
-                const VideoContainer = ({stream, username, isLocal}) => {
+const VideoContainer = ({ stream, username, isLocal }) => {
+    const videoRef = useRef();
     const [videoEnabled, setVideoEnabled] = useState(true);
 
     useEffect(() => {
         if (videoRef.current && stream) {
-                    videoRef.current.srcObject = stream;
+            videoRef.current.srcObject = stream;
 
-                // Safer track monitoring
-                const tracks = stream.getVideoTracks();
+            // Safer track monitoring
+            const tracks = stream.getVideoTracks();
             if (tracks.length > 0) {
-                    setVideoEnabled(tracks[0].enabled);
+                setVideoEnabled(tracks[0].enabled);
                 const handleTrackChange = () => setVideoEnabled(tracks[0].enabled);
                 tracks[0].addEventListener('enabled', handleTrackChange);
                 tracks[0].addEventListener('disabled', handleTrackChange);
                 return () => {
                     tracks[0].removeEventListener('enabled', handleTrackChange);
-                tracks[0].removeEventListener('disabled', handleTrackChange);
+                    tracks[0].removeEventListener('disabled', handleTrackChange);
                 };
             }
         }
     }, [stream]);
 
-                return (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    className="relative w-40 h-28 bg-[#1a1c1e] rounded-xl overflow-hidden border-2 border-white/80 shadow-2xl pointer-events-auto backdrop-blur-md"
-                >
-                    {stream && (
-                        <video
-                            ref={videoRef}
-                            autoPlay
-                            playsInline
-                            muted={isLocal}
-                            className={`w-full h-full object-cover transition-opacity duration-500 ${videoEnabled ? 'opacity-100' : 'opacity-0'}`}
-                        />
-                    )}
+    return (
+        <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="relative w-40 h-28 bg-[#1a1c1e] rounded-xl overflow-hidden border-2 border-white/80 shadow-2xl pointer-events-auto backdrop-blur-md"
+        >
+            {stream && (
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted={isLocal}
+                    className={`w-full h-full object-cover transition-opacity duration-500 ${videoEnabled ? 'opacity-100' : 'opacity-0'}`}
+                />
+            )}
 
-                    {(!stream || !videoEnabled) && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#2c2e33] to-[#1a1c1e]">
-                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-1">
-                                <Users size={16} className="text-white/40" />
-                            </div>
-                            <span className="text-[8px] text-white/40 font-black uppercase tracking-widest">{username}</span>
-                        </div>
-                    )}
-
-                    <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[9px] text-white font-black uppercase tracking-widest truncate max-w-[80%]">
-                                {isLocal ? 'ME (PRO)' : username}
-                            </span>
-                            {!isLocal && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
-                            )}
-                        </div>
+            {(!stream || !videoEnabled) && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#2c2e33] to-[#1a1c1e]">
+                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-1">
+                        <Users size={16} className="text-white/40" />
                     </div>
-                </motion.div>
-                );
+                    <span className="text-[8px] text-white/40 font-black uppercase tracking-widest">{username}</span>
+                </div>
+            )}
+
+            <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                <div className="flex items-center justify-between">
+                    <span className="text-[9px] text-white font-black uppercase tracking-widest truncate max-w-[80%]">
+                        {isLocal ? 'ME (PRO)' : username}
+                    </span>
+                    {!isLocal && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
+                    )}
+                </div>
+            </div>
+        </motion.div>
+    );
 };
 
-                export default WhiteboardRoom;
+export default WhiteboardRoom;

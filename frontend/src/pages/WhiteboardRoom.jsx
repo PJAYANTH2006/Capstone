@@ -4,7 +4,8 @@ import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import { useCanvas } from '../hooks/useCanvas';
 import { motion } from 'framer-motion';
-import { Pencil, Eraser, Trash2, Users, Layout as LayoutIcon, Undo, Redo, Square, Circle, Minus, Type, Download, Crown, Ruler, Grid3X3, Shapes, MessageSquare, Layers, Eye, EyeOff, Lock, Cloud, Copy, Check } from 'lucide-react';
+import { Pencil, Eraser, Trash2, Users, Layout as LayoutIcon, Undo, Redo, Square, Circle, Minus, Type, Download, Crown, Ruler, Grid3X3, Shapes, MessageSquare, Layers, Eye, EyeOff, Lock, Cloud, Copy, Check, Video, VideoOff, Mic, MicOff, Monitor, MonitorOff } from 'lucide-react';
+import { useWebRTC } from '../hooks/useWebRTC';
 import Chat from '../components/Chat';
 import GridOverlay from '../components/GridOverlay';
 import AssetLibrary from '../components/AssetLibrary';
@@ -22,6 +23,7 @@ const WhiteboardRoom = () => {
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [showLayers, setShowLayers] = useState(false);
     const [copied, setCopied] = useState(false);
+    const { localStream, remoteStreams, isMuted, isVideoOff, isScreenSharing, startMedia, stopMedia, toggleMute, toggleVideo, startScreenShare, stopScreenShare } = useWebRTC(socket, roomId);
 
     const handleCopyRoomId = () => {
         navigator.clipboard.writeText(roomId);
@@ -237,6 +239,45 @@ const WhiteboardRoom = () => {
                     )}
                 </div>
 
+                <div className="w-full h-px bg-gray-100"></div>
+
+                <div>
+                    <span className="text-xs font-semibold text-gray-500 mb-3 block">Media Controls</span>
+                    <div className="flex flex-col gap-2">
+                        <button
+                            onClick={localStream ? stopMedia : startMedia}
+                            className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg border transition-all text-xs font-bold uppercase tracking-wider ${localStream ? 'bg-red-50 border-red-100 text-red-600' : 'bg-gray-50 border-gray-100 text-gray-600 hover:bg-gray-100'}`}
+                        >
+                            {localStream ? 'End Connection' : 'Join Studio Live'}
+                            {localStream ? <VideoOff size={14} /> : <Video size={14} />}
+                        </button>
+
+                        {localStream && (
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                                <button
+                                    onClick={toggleMute}
+                                    className={`p-2 rounded-lg border flex items-center justify-center transition-all ${isMuted ? 'bg-red-50 border-red-100 text-red-600' : 'bg-gray-50 border-gray-100 text-gray-600'}`}
+                                >
+                                    {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+                                </button>
+                                <button
+                                    onClick={toggleVideo}
+                                    className={`p-2 rounded-lg border flex items-center justify-center transition-all ${isVideoOff ? 'bg-red-50 border-red-100 text-red-600' : 'bg-gray-50 border-gray-100 text-gray-600'}`}
+                                >
+                                    {isVideoOff ? <VideoOff size={16} /> : <Video size={16} />}
+                                </button>
+                                <button
+                                    onClick={isScreenSharing ? stopScreenShare : startScreenShare}
+                                    className={`col-span-2 p-2 rounded-lg border flex items-center justify-center gap-2 transition-all ${isScreenSharing ? 'bg-blue-50 border-blue-100 text-blue-600' : 'bg-gray-50 border-gray-100 text-gray-600'}`}
+                                >
+                                    {isScreenSharing ? <MonitorOff size={16} /> : <Monitor size={16} />}
+                                    <span className="text-[9px] font-black uppercase tracking-widest">{isScreenSharing ? 'Stop Sharing' : 'Present Screen'}</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 <div>
                     <span className="text-xs font-semibold text-gray-500 mb-2 block">Stroke width</span>
                     <div className="flex bg-gray-50 rounded-lg p-1 gap-1">
@@ -399,8 +440,62 @@ const WhiteboardRoom = () => {
                         )}
                     </motion.div>
                 )}
+                {/* Floating Video Grid */}
+                {localStream && (
+                    <div className="absolute left-64 bottom-20 z-[997] flex flex-wrap gap-3 max-w-[calc(100vw-600px)] pointer-events-none">
+                        <VideoContainer stream={localStream} username={user.username} isLocal={true} />
+                        {Object.entries(remoteStreams).map(([socketId, stream]) => {
+                            const participant = participants.find(p => p.socketId === socketId);
+                            return (
+                                <VideoContainer
+                                    key={socketId}
+                                    stream={stream}
+                                    username={participant?.username || 'Collaborator'}
+                                    isLocal={false}
+                                />
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
+    );
+};
+
+const VideoContainer = ({ stream, username, isLocal }) => {
+    const videoRef = useRef();
+
+    useEffect(() => {
+        if (videoRef.current && stream) {
+            videoRef.current.srcObject = stream;
+        }
+    }, [stream]);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative w-56 h-36 bg-[#1a1c1e] rounded-xl overflow-hidden border-2 border-white shadow-2xl pointer-events-auto group"
+        >
+            <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted={isLocal}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${stream.getVideoTracks()[0]?.enabled === false ? 'opacity-0' : 'opacity-100'}`}
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-[#1a1c1e]/40 backdrop-blur-sm pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-[10px] text-white font-black uppercase tracking-[0.2em]">{username}</span>
+            </div>
+            {!isLocal && (
+                <div className="absolute top-2 right-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+                </div>
+            )}
+            <div className="absolute bottom-2 left-2 bg-black/60 px-2.5 py-1 rounded-md text-[9px] text-white font-black uppercase tracking-widest backdrop-blur-md border border-white/10">
+                {isLocal ? 'Studio Live (You)' : username}
+            </div>
+        </motion.div>
     );
 };
 

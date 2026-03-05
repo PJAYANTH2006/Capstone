@@ -10,7 +10,7 @@ const socketHandler = (io) => {
             socket.join(roomId);
 
             if (!roomUsers[roomId]) roomUsers[roomId] = {};
-            roomUsers[roomId][socket.id] = { username: user.username, id: user.id };
+            roomUsers[roomId][socket.id] = { username: user.username, id: user.id, socketId: socket.id };
 
             console.log(`User ${user.username} joined room: ${roomId}`);
 
@@ -34,6 +34,27 @@ const socketHandler = (io) => {
             } catch (err) {
                 console.error('Error joining room:', err);
             }
+        });
+
+        // WebRTC Signaling
+        socket.on('webrtc-offer', ({ to, offer }) => {
+            socket.to(to).emit('webrtc-offer', { from: socket.id, offer });
+        });
+
+        socket.on('webrtc-answer', ({ to, answer }) => {
+            socket.to(to).emit('webrtc-answer', { from: socket.id, answer });
+        });
+
+        socket.on('webrtc-ice-candidate', ({ to, candidate }) => {
+            socket.to(to).emit('webrtc-ice-candidate', { from: socket.id, candidate });
+        });
+
+        socket.on('start-media', ({ roomId }) => {
+            socket.to(roomId).emit('user-started-media', { from: socket.id });
+        });
+
+        socket.on('stop-media', ({ roomId }) => {
+            socket.to(roomId).emit('user-stopped-media', { from: socket.id });
         });
 
         socket.on('cursor-move', ({ roomId, data }) => {
@@ -102,6 +123,7 @@ const socketHandler = (io) => {
                     const user = roomUsers[roomId][socket.id];
                     delete roomUsers[roomId][socket.id];
                     io.to(roomId).emit('room-users', Object.values(roomUsers[roomId]));
+                    io.to(roomId).emit('user-left', { socketId: socket.id });
                     console.log(`User ${user.username} left room: ${roomId}`);
                     break;
                 }

@@ -215,7 +215,9 @@ export const useWebRTC = (socket, roomId) => {
         });
 
         socket.on('user-started-media', ({ from }) => {
-            if (localStreamRef.current) initiateCall(from, localStreamRef.current);
+            // Fix: Initiate call even if we don't have a local stream yet.
+            // This allows one-way video/audio sharing.
+            initiateCall(from, localStreamRef.current);
         });
 
         socket.on('moderator-command', ({ command }) => {

@@ -58,15 +58,19 @@ const socketHandler = (io) => {
         });
 
         socket.on('moderator-command', async ({ roomId, command, targetId }) => {
-            // Verify host identity via DB
             try {
                 const room = await Room.findOne({ roomId });
-                if (room && room.host.toString() === roomUsers[roomId][socket.id].id) {
+                const currentUser = roomUsers[roomId]?.[socket.id];
+
+                if (room && currentUser && room.host.toString() === currentUser.id) {
+                    console.log(`Moderator Command verified: ${command} from ${currentUser.username}`);
                     if (targetId) {
                         socket.to(targetId).emit('moderator-command', { command });
                     } else {
                         socket.to(roomId).emit('moderator-command', { command });
                     }
+                } else {
+                    console.warn(`Unauthorized moderation attempt by ${currentUser?.username || 'unknown'}`);
                 }
             } catch (err) {
                 console.error('Moderation error:', err);

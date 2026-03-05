@@ -41,10 +41,12 @@ export const useWebRTC = (socket, roomId) => {
         };
 
         pc.ontrack = (event) => {
-            setRemoteStreams(prev => ({
-                ...prev,
-                [peerSocketId]: event.streams[0]
-            }));
+            if (event.streams && event.streams[0]) {
+                setRemoteStreams(prev => ({
+                    ...prev,
+                    [peerSocketId]: event.streams[0]
+                }));
+            }
         };
 
         pc.onconnectionstatechange = () => {

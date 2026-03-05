@@ -445,6 +445,7 @@ const WhiteboardRoom = () => {
                     <div className="absolute left-64 bottom-20 z-[997] flex flex-wrap gap-3 max-w-[calc(100vw-600px)] pointer-events-none">
                         <VideoContainer stream={localStream} username={user.username} isLocal={true} />
                         {Object.entries(remoteStreams).map(([socketId, stream]) => {
+                            if (!stream) return null;
                             const participant = participants.find(p => p.socketId === socketId);
                             return (
                                 <VideoContainer
@@ -482,7 +483,7 @@ const VideoContainer = ({ stream, username, isLocal }) => {
                 autoPlay
                 playsInline
                 muted={isLocal}
-                className={`w-full h-full object-cover transition-opacity duration-300 ${stream.getVideoTracks()[0]?.enabled === false ? 'opacity-0' : 'opacity-100'}`}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${(stream && stream.getVideoTracks().length > 0 && stream.getVideoTracks()[0].enabled === false) ? 'opacity-0' : 'opacity-100'}`}
             />
             <div className="absolute inset-0 flex items-center justify-center bg-[#1a1c1e]/40 backdrop-blur-sm pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="text-[10px] text-white font-black uppercase tracking-[0.2em]">{username}</span>

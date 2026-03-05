@@ -4,7 +4,7 @@ import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import { useCanvas } from '../hooks/useCanvas';
 import { motion } from 'framer-motion';
-import { Pencil, Eraser, Trash2, Users, Layout as LayoutIcon, Undo, Redo, Square, Circle, Minus, Type, Download, Crown, Ruler, Grid3X3, Shapes, MessageSquare, Layers, Eye, EyeOff, Lock, Cloud } from 'lucide-react';
+import { Pencil, Eraser, Trash2, Users, Layout as LayoutIcon, Undo, Redo, Square, Circle, Minus, Type, Download, Crown, Ruler, Grid3X3, Shapes, MessageSquare, Layers, Eye, EyeOff, Lock, Cloud, Copy, Check } from 'lucide-react';
 import Chat from '../components/Chat';
 import GridOverlay from '../components/GridOverlay';
 import AssetLibrary from '../components/AssetLibrary';
@@ -21,6 +21,13 @@ const WhiteboardRoom = () => {
     const [showAssets, setShowAssets] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [showLayers, setShowLayers] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const handleCopyRoomId = () => {
+        navigator.clipboard.writeText(roomId);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     const isArchitect = user && roomHost && user.id === roomHost;
     const layers = ['Base Floor Plan', 'Electrical', 'Plumbing', 'Furniture', 'Annotations', 'Redline'];
@@ -93,6 +100,20 @@ const WhiteboardRoom = () => {
         <div className="h-screen w-screen flex flex-col overflow-hidden relative bg-[#f9f7f2]">
             {/* Top Right Island - Users & Exit */}
             <div className="absolute top-4 right-4 z-[999] flex gap-2">
+                <div className="flex items-center gap-2 bg-white px-3 py-1 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex flex-col">
+                        <span className="text-[8px] uppercase font-bold text-gray-400 leading-none">Meeting ID</span>
+                        <span className="text-xs font-mono font-bold text-gray-700">{roomId}</span>
+                    </div>
+                    <button
+                        onClick={handleCopyRoomId}
+                        className="p-1.5 hover:bg-gray-100 rounded-md transition-colors text-gray-500"
+                        title="Copy Room ID"
+                    >
+                        {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                    </button>
+                </div>
+
                 <div className="flex items-center -space-x-2 bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-sm">
                     {participants.slice(0, 5).map((p, i) => (
                         <div
